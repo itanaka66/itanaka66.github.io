@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>白亜のノート - 修正版v12</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; color: #333; background: #f5f5f5; }
+.game-container { padding: 1rem; max-width: 700px; margin: 0 auto; }
+.banner { border-radius: 10px; overflow: hidden; margin-bottom: 1rem; line-height: 0; }
+.banner svg { width: 100%; height: 90px; display: block; }
+.status-row { display: flex; gap: 12px; margin-bottom: 1rem; }
+.portrait-box { background: white; border: 1px solid #ddd; border-radius: 8px; padding: 8px; text-align: center; flex-shrink: 0; width: 88px; }
+.portrait-box svg { width: 64px; height: 64px; }
+.portrait-label { font-size: 10px; color: #999; margin-top: 2px; }
+.village-box { background: white; border: 1px solid #ddd; border-radius: 8px; padding: 8px; flex: 1; overflow: hidden; }
+.village-box svg { width: 100%; height: 80px; display: block; }
+.village-status { font-size: 12px; color: #666; margin-top: 6px; padding-top: 6px; border-top: 1px solid #eee; }
+.header { margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid #ddd; }
+.location-icon svg { width: 32px; height: 32px; }
+.title { font-size: 18px; font-weight: 500; margin-bottom: 0.25rem; }
+.subtitle { font-size: 13px; color: #666; }
+.tabs { display: flex; margin-bottom: 1.5rem; border-bottom: 1px solid #ddd; overflow-x: auto; }
+.tab { padding: 12px 14px; border: none; background: transparent; cursor: pointer; font-size: 13px; color: #999; border-bottom: 2px solid transparent; white-space: nowrap; }
+.tab.active { color: #333; border-bottom-color: #378ADD; }
+.panel { display: none; }
+.panel.active { display: block; }
+.metrics { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 1rem; }
+.metric { background: white; padding: 12px; border-radius: 8px; border: 1px solid #ddd; }
+.metric-label { font-size: 12px; color: #999; margin-bottom: 4px; }
+.metric-value { font-size: 18px; font-weight: 500; }
+.metric-bar { height: 4px; background: #ddd; border-radius: 2px; margin-top: 6px; overflow: hidden; }
+.metric-fill { height: 100%; background: #378ADD; border-radius: 2px; }
+.metric-fill.warn { background: #E24B4A; }
+.story-box { background: white; padding: 1rem; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 1rem; }
+.story-text { font-size: 14px; line-height: 1.6; }
+.event-log { font-size: 12px; color: #666; margin-top: 8px; padding-top: 8px; border-top: 1px solid #eee; min-height: 16px; }
+.dinosaur-alert { background: #FEE8E8; color: #A32D2D; padding: 12px; border-radius: 8px; margin-bottom: 1rem; font-size: 13px; border: 1px solid #F09595; }
+.dinosaur-alert strong { display: block; margin-bottom: 4px; }
+.actions { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 1rem; }
+.action-btn { padding: 12px; border: 1px solid #ddd; border-radius: 8px; background: white; cursor: pointer; font-size: 12px; display: flex; align-items: center; gap: 10px; text-align: left; }
+.action-btn svg { width: 26px; height: 26px; flex-shrink: 0; }
+.action-text { display: flex; flex-direction: column; }
+.action-btn:hover { background: #f9f9f9; }
+.action-btn.disabled { opacity: 0.5; cursor: not-allowed; }
+.action-name { font-weight: 500; display: block; margin-bottom: 2px; }
+.action-cost { font-size: 11px; color: #999; }
+.map { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 1rem; }
+.location { background: white; padding: 12px; border-radius: 8px; border: 1px solid #ddd; cursor: pointer; text-align: center; }
+.location:hover { background: #f9f9f9; }
+.location-name { font-weight: 500; font-size: 13px; margin-bottom: 4px; }
+.location-icon { font-size: 22px; margin: 6px 0; }
+.location-status { font-size: 11px; color: #999; }
+.location.explored { border-color: #378ADD; background: #E6F1FB; }
+.tech-tree { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 1rem; }
+.tech { background: white; padding: 12px; border-radius: 8px; border: 1px solid #ddd; cursor: pointer; }
+.tech.unlocked { border-color: #639922; background: #EAF3DE; }
+.tech.locked { opacity: 0.6; }
+.tech-name { font-weight: 500; font-size: 13px; margin-bottom: 4px; }
+.tech-cost { font-size: 11px; color: #999; }
+.tech-level { font-size: 12px; margin-top: 4px; }
+.save-slot { background: white; padding: 12px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+.save-name { font-weight: 500; font-size: 13px; }
+.save-date { font-size: 11px; color: #999; margin-top: 2px; }
+.save-slot button { padding: 8px 12px; font-size: 12px; border: 1px solid #ddd; border-radius: 8px; background: white; cursor: pointer; }
+textarea { width: 100%; height: 80px; font-size: 11px; border: 1px solid #ddd; border-radius: 8px; padding: 8px; margin-bottom: 8px; }
+.controls { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn { padding: 10px 16px; border: 1px solid #ddd; border-radius: 8px; background: #378ADD; color: white; cursor: pointer; font-size: 13px; font-weight: 500; }
+.btn-secondary { background: white; color: #333; }
+.btn-success { background: #639922; color: white; }
+.ending-screen { background: white; padding: 1.5rem; border-radius: 12px; border: 1px solid #ddd; text-align: center; }
+.ending-title { font-size: 20px; font-weight: 500; margin-bottom: 1rem; }
+.ending-text { font-size: 14px; line-height: 1.6; margin-bottom: 1.5rem; color: #666; }
+.choice-box { background: #FEE8E8; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; }
+.choice-box p { font-size: 13px; margin-bottom: 10px; color: #A32D2D; }
+.choice-btns { display: flex; gap: 8px; }
+.choice-btns button { flex: 1; padding: 10px; font-size: 12px; border: 1px solid #ddd; border-radius: 8px; background: white; cursor: pointer; }
+</style>
+</head>
+<body>
+<div class="game-container">
+  <div class="banner">
+    <svg viewBox="0 0 400 120" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+      <defs>
+        <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#FDE8A8"/>
+          <stop offset="100%" stop-color="#F7C873"/>
+        </linearGradient>
+        <linearGradient id="hillGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#6B8E4E"/>
+          <stop offset="100%" stop-color="#4C6B36"/>
+        </linearGradient>
+      </defs>
+      <rect x="0" y="0" width="400" height="120" fill="url(#skyGrad)"/>
+      <circle cx="340" cy="30" r="18" fill="#FFF3D0"/>
+      <path d="M0,80 Q60,50 120,75 T240,70 T400,80 L400,120 L0,120 Z" fill="url(#hillGrad)"/>
+      <path d="M0,95 Q80,75 160,92 T400,90 L400,120 L0,120 Z" fill="#3E5A2A"/>
+      <g fill="#2E4520">
+        <ellipse cx="60" cy="88" rx="10" ry="16"/>
+        <ellipse cx="90" cy="92" rx="8" ry="13"/>
+        <ellipse cx="310" cy="86" rx="12" ry="18"/>
+        <ellipse cx="340" cy="94" rx="9" ry="14"/>
+      </g>
+      <g transform="translate(148,54) scale(2.1)" opacity="0.9">
+        <path d="M2 28 Q6 24 12 24 Q10 29 6 33 Q3 32 2 28 Z" fill="#33261C"/>
+        <path d="M12 24 L11 32 L8 37 L13 37 L15 30 L16 24 Z" fill="#2A1F17"/>
+        <path d="M22 21 L21 29 L19 35 L23 35 L25 27 L26 21 Z" fill="#2A1F17"/>
+        <path d="M11 24 Q9 16 16 11 Q22 7 28 10 Q31 12 30 16 Q28 20 22 21 Q16 22 11 24 Z" fill="#33261C"/>
+        <path d="M20 12 L22 8 L24 12 Z" fill="#2A1F17"/>
+        <path d="M27 15 L31 17 L28 19 Z" fill="#33261C"/>
+        <path d="M28 10 Q33 6 37 9 Q39 11 37 13 L34 12 Q35 15 32 15 Q29 14 28 12 Z" fill="#33261C"/>
+        <path d="M34 12 L38 13.5 L34 15 Z" fill="#1A120C"/>
+        <circle cx="32" cy="10" r="1" fill="#F4E8D8"/>
+      </g>
+    </svg>
+  </div>
+  <div class="header">
+    <div class="title">白亜のノート - 修正版v12</div>
+    <div class="subtitle" id="mainSubtitle">白亜紀 第1年 春季</div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-panel="game">ゲーム</button>
+    <button class="tab" data-panel="map">探検</button>
+    <button class="tab" data-panel="tech">研究</button>
+    <button class="tab" data-panel="save">セーブ</button>
+  </div>
+
+  <div id="game" class="panel active">
+    <div class="status-row">
+      <div class="portrait-box">
+        <div id="portrait"></div>
+        <div class="portrait-label">主人公</div>
+      </div>
+      <div class="village-box">
+        <div id="villageScene"></div>
+        <div class="village-status" id="villageStatus"></div>
+      </div>
+    </div>
+    <div class="metrics">
+      <div class="metric"><div class="metric-label">人口</div><div class="metric-value" id="population">12</div><div class="metric-bar"><div class="metric-fill" id="popBar"></div></div></div>
+      <div class="metric"><div class="metric-label">食料</div><div class="metric-value" id="food">45</div><div class="metric-bar"><div class="metric-fill" id="foodBar"></div></div></div>
+      <div class="metric"><div class="metric-label">木材</div><div class="metric-value" id="wood">28</div><div class="metric-bar"><div class="metric-fill" id="woodBar"></div></div></div>
+      <div class="metric"><div class="metric-label">石材</div><div class="metric-value" id="stone">12</div><div class="metric-bar"><div class="metric-fill" id="stoneBar"></div></div></div>
+      <div class="metric"><div class="metric-label">技術点</div><div class="metric-value" id="techPoints">5</div><div class="metric-bar"><div class="metric-fill" id="techBar"></div></div></div>
+      <div class="metric"><div class="metric-label">幸福度</div><div class="metric-value" id="happiness">75%</div><div class="metric-bar"><div class="metric-fill" id="happyBar"></div></div></div>
+    </div>
+
+    <div id="dinosaurAlert" class="dinosaur-alert" style="display:none;"></div>
+    <div id="choiceBox" style="display:none;"></div>
+
+    <div class="story-box">
+      <div class="story-text" id="storyText"></div>
+      <div class="event-log" id="eventLog"></div>
+    </div>
+
+    <div class="actions" id="actionsContainer"></div>
+    <div class="controls">
+      <button class="btn btn-secondary" id="resetBtn">リセット</button>
+    </div>
+  </div>
+
+  <div id="map" class="panel">
+    <div class="story-box" style="margin-bottom: 1rem;"><div class="story-text">探検先を選ぼう。危険な場所では戦うか撤退するか選べる。</div></div>
+    <div class="map" id="mapContainer"></div>
+  </div>
+
+  <div id="tech" class="panel">
+    <div class="story-box" style="margin-bottom: 1rem;"><div class="story-text">技術点を使って研究を進める。前提技術が必要なものもある。</div></div>
+    <div class="tech-tree" id="techContainer"></div>
+  </div>
+
+  <div id="save" class="panel">
+    <div class="controls" style="margin-bottom: 1rem;">
+      <button class="btn btn-success" id="saveBtn">セーブ</button>
+      <button class="btn btn-secondary" id="exportBtn">エクスポート</button>
+    </div>
+    <textarea id="importArea" placeholder="ここにセーブデータを貼り付けてインポート"></textarea>
+    <button class="btn btn-secondary" id="importBtn" style="margin-bottom:1rem;">インポート</button>
+    <div id="saveSlotsContainer"></div>
+  </div>
+
+  <div id="endingScreen" style="display:none;"></div>
+</div>
+
+<script>
+const ICONS = {
+  forest: `<svg viewBox="0 0 40 40"><path d="M20 4 L28 20 H12 Z" fill="#4C7A3D"/><path d="M20 12 L30 28 H10 Z" fill="#3E6631"/><rect x="17" y="27" width="6" height="9" fill="#6B4A32"/></svg>`,
+  river: `<svg viewBox="0 0 40 40"><path d="M4 14 Q14 8 20 14 T36 14 V26 Q26 32 20 26 T4 26 Z" fill="#4A90C4"/><path d="M4 20 Q14 14 20 20 T36 20" fill="none" stroke="#BFE0F5" stroke-width="2"/></svg>`,
+  cliff: `<svg viewBox="0 0 40 40"><path d="M2 34 L12 10 L20 22 L28 6 L38 34 Z" fill="#9B8A76"/><path d="M12 10 L16 18 L8 22 Z" fill="#B4A48F"/></svg>`,
+  ruins: `<svg viewBox="0 0 40 40"><rect x="6" y="16" width="4" height="18" fill="#C9BFA8"/><rect x="18" y="16" width="4" height="18" fill="#C9BFA8"/><rect x="30" y="16" width="4" height="18" fill="#C9BFA8"/><rect x="4" y="10" width="32" height="5" fill="#B0A38A"/><path d="M4 34 L36 34" stroke="#8A7C63" stroke-width="2"/></svg>`,
+  dino: `<svg viewBox="0 0 40 40">
+    <path d="M2 28 Q6 24 12 24 Q10 29 6 33 Q3 32 2 28 Z" fill="#3E5A32"/>
+    <path d="M12 24 L11 32 L8 37 L13 37 L15 30 L16 24 Z" fill="#33472A"/>
+    <path d="M22 21 L21 29 L19 35 L23 35 L25 27 L26 21 Z" fill="#33472A"/>
+    <path d="M11 24 Q9 16 16 11 Q22 7 28 10 Q31 12 30 16 Q28 20 22 21 Q16 22 11 24 Z" fill="#4C7040"/>
+    <path d="M20 12 L22 8 L24 12 Z" fill="#3E5A32"/>
+    <path d="M27 15 L31 17 L28 19 Z" fill="#4C7040"/>
+    <path d="M28 10 Q33 6 37 9 Q39 11 37 13 L34 12 Q35 15 32 15 Q29 14 28 12 Z" fill="#4C7040"/>
+    <path d="M34 12 L38 13.5 L34 15 Z" fill="#7A2E22"/>
+    <path d="M34.5 12.6 L36 13 L34.5 13.4 Z M34.5 13.6 L36 14 L34.5 14.4 Z" fill="#F4E8D8"/>
+    <circle cx="32" cy="10" r="1" fill="#1A1A1A"/>
+  </svg>`,
+  mine: `<svg viewBox="0 0 40 40"><path d="M6 24 L20 12 L34 24 L30 34 L10 34 Z" fill="#7A6A56"/><rect x="16" y="24" width="8" height="10" fill="#3A322A"/><circle cx="14" cy="20" r="2" fill="#D9C48A"/><circle cx="26" cy="19" r="1.6" fill="#D9C48A"/></svg>`,
+  hunt: `<svg viewBox="0 0 40 40"><path d="M6 30 L30 6" stroke="#6B4A32" stroke-width="3" stroke-linecap="round"/><path d="M26 4 L34 4 L34 12 Z" fill="#8A6A4A"/><path d="M4 32 L10 30 L8 36 Z" fill="#8A6A4A"/></svg>`,
+  quarry: `<svg viewBox="0 0 40 40"><rect x="8" y="26" width="10" height="8" fill="#9B8A76" transform="rotate(-15 13 30)"/><path d="M8 12 L20 8 L18 20 L6 24 Z" fill="#B4A48F"/><rect x="20" y="8" width="4" height="20" fill="#6B4A32" transform="rotate(30 22 18)"/></svg>`,
+  farm: `<svg viewBox="0 0 40 40"><rect x="4" y="26" width="32" height="8" fill="#8A6A3E"/><path d="M8 26 L8 14 M16 26 L16 10 M24 26 L24 14 M32 26 L32 10" stroke="#4C7A3D" stroke-width="3" stroke-linecap="round"/></svg>`,
+  hut: `<svg viewBox="0 0 40 40"><path d="M6 20 L20 6 L34 20 Z" fill="#8A6A4A"/><rect x="10" y="20" width="20" height="14" fill="#B99B72"/><rect x="17" y="26" width="6" height="8" fill="#4C382A"/></svg>`,
+  well: `<svg viewBox="0 0 40 40"><rect x="8" y="18" width="24" height="14" rx="2" fill="#9B8A76"/><rect x="6" y="14" width="28" height="5" fill="#7A6A56"/><path d="M20 6 L20 14 M14 8 L26 8" stroke="#5A4A3A" stroke-width="2"/></svg>`,
+  medical: `<svg viewBox="0 0 40 40"><rect x="6" y="10" width="28" height="22" rx="3" fill="#E8E4DA"/><rect x="17" y="14" width="6" height="14" fill="#D9534F"/><rect x="12" y="19" width="16" height="6" fill="#D9534F"/></svg>`,
+  tower: `<svg viewBox="0 0 40 40"><rect x="14" y="14" width="12" height="20" fill="#7A6A56"/><path d="M10 14 L20 4 L30 14 Z" fill="#5A4A3A"/><rect x="10" y="10" width="20" height="4" fill="#9B8A76"/></svg>`,
+  trade: `<svg viewBox="0 0 40 40"><circle cx="14" cy="26" r="7" fill="none" stroke="#8A6A4A" stroke-width="2.5"/><circle cx="26" cy="26" r="7" fill="none" stroke="#8A6A4A" stroke-width="2.5"/><path d="M14 19 L26 8 M22 8 L26 8 L26 12" stroke="#4C7A3D" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>`,
+  storehouse: `<svg viewBox="0 0 40 40"><rect x="6" y="16" width="28" height="18" fill="#9B8A76"/><path d="M4 16 L20 4 L36 16 Z" fill="#7A6A56"/><rect x="16" y="22" width="8" height="12" fill="#4C382A"/></svg>`,
+  rest: `<svg viewBox="0 0 40 40"><circle cx="20" cy="14" r="6" fill="#F0C987"/><path d="M8 32 Q8 22 20 22 Q32 22 32 32 Z" fill="#8A6A4A"/></svg>`,
+  festival: `<svg viewBox="0 0 40 40"><path d="M20 4 L23 14 L34 14 L25 21 L28 32 L20 25 L12 32 L15 21 L6 14 L17 14 Z" fill="#E0A030"/></svg>`
+};
+
+// 主人公（男）の表情バリエーション
+// 主人公（男・イケメンアニメ風）の表情バリエーション
+const FACE_BASE = {
+  hairBack: `<path d="M14 30 Q12 12 32 8 Q52 12 50 30 L50 42 Q46 34 46 26 Q40 16 32 16 Q24 16 18 26 Q18 34 14 42 Z" fill="#2C3A5E"/>`,
+  face: `<ellipse cx="32" cy="36" rx="15" ry="17" fill="#F4CBA0"/><ellipse cx="17" cy="37" rx="2.6" ry="4.2" fill="#F4CBA0"/><ellipse cx="47" cy="37" rx="2.6" ry="4.2" fill="#F4CBA0"/>`,
+  hairFront: `<path d="M13 28 Q11 10 32 6 Q53 10 51 28 Q48 20 44 17 Q46 24 44 27 Q41 15 32 14 Q23 15 20 27 Q18 24 20 17 Q16 20 13 28 Z" fill="#2C3A5E"/><path d="M32 6 Q40 8 44 17" stroke="#4C5E8C" stroke-width="1.6" fill="none" stroke-linecap="round"/>`,
+  nose: `<path d="M31.5 39 Q32 41 31 42.5" stroke="#D9A87A" stroke-width="1.2" fill="none" stroke-linecap="round"/>`
+};
+
+const FACES = {
+  happy: `<svg viewBox="0 0 64 64">${FACE_BASE.hairBack}${FACE_BASE.face}
+    <path d="M21 30 Q24 27 27 29.5" stroke="#2C3A5E" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+    <path d="M37 29.5 Q40 27 43 30" stroke="#2C3A5E" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+    <path d="M20 33 Q24 29 28 33 Q24 36 20 33 Z" fill="#3A6EA5"/><path d="M36 33 Q40 29 44 33 Q40 36 36 33 Z" fill="#3A6EA5"/>
+    <circle cx="24.5" cy="32.3" r="0.9" fill="#fff"/><circle cx="40.5" cy="32.3" r="0.9" fill="#fff"/>
+    <ellipse cx="21" cy="39" rx="3" ry="1.6" fill="#F2A98F" opacity="0.55"/><ellipse cx="43" cy="39" rx="3" ry="1.6" fill="#F2A98F" opacity="0.55"/>
+    ${FACE_BASE.nose}
+    <path d="M25 44 Q32 50 39 44" stroke="#8A4A3A" stroke-width="2" fill="none" stroke-linecap="round"/>
+    ${FACE_BASE.hairFront}</svg>`,
+  neutral: `<svg viewBox="0 0 64 64">${FACE_BASE.hairBack}${FACE_BASE.face}
+    <path d="M21 29.5 Q24 27.5 27 29" stroke="#2C3A5E" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+    <path d="M37 29 Q40 27.5 43 29.5" stroke="#2C3A5E" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+    <ellipse cx="24.5" cy="33" rx="2.6" ry="3.2" fill="#3A6EA5"/><ellipse cx="40.5" cy="33" rx="2.6" ry="3.2" fill="#3A6EA5"/>
+    <circle cx="24.5" cy="33" r="3.2" fill="none"/><circle cx="23.6" cy="31.8" r="0.8" fill="#fff"/><circle cx="39.6" cy="31.8" r="0.8" fill="#fff"/>
+    ${FACE_BASE.nose}
+    <path d="M27 45 L37 45" stroke="#8A4A3A" stroke-width="2" fill="none" stroke-linecap="round"/>
+    ${FACE_BASE.hairFront}</svg>`,
+  worried: `<svg viewBox="0 0 64 64">${FACE_BASE.hairBack}${FACE_BASE.face}
+    <path d="M21 28 Q24 31 28 29" stroke="#2C3A5E" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+    <path d="M36 29 Q40 31 43 28" stroke="#2C3A5E" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+    <ellipse cx="24.5" cy="33.5" rx="2.4" ry="3" fill="#3A6EA5"/><ellipse cx="40.5" cy="33.5" rx="2.4" ry="3" fill="#3A6EA5"/>
+    <circle cx="23.7" cy="32.4" r="0.7" fill="#fff"/><circle cx="39.7" cy="32.4" r="0.7" fill="#fff"/>
+    ${FACE_BASE.nose}
+    <path d="M27 46 Q32 43 37 46" stroke="#8A4A3A" stroke-width="2" fill="none" stroke-linecap="round"/>
+    ${FACE_BASE.hairFront}</svg>`,
+  exhausted: `<svg viewBox="0 0 64 64">${FACE_BASE.hairBack}${FACE_BASE.face}
+    <path d="M21 30 L27 30" stroke="#2C3A5E" stroke-width="1.8" stroke-linecap="round"/>
+    <path d="M37 30 L43 30" stroke="#2C3A5E" stroke-width="1.8" stroke-linecap="round"/>
+    <path d="M21 34 Q24.5 32 28 34" stroke="#2C3A5E" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+    <path d="M36 34 Q39.5 32 43 34" stroke="#2C3A5E" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+    <ellipse cx="22" cy="41" rx="3" ry="1.4" fill="#8A6A9A" opacity="0.5"/><ellipse cx="42" cy="41" rx="3" ry="1.4" fill="#8A6A9A" opacity="0.5"/>
+    ${FACE_BASE.nose}
+    <path d="M28 46 Q32 44.5 36 46" stroke="#8A4A3A" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+    ${FACE_BASE.hairFront}</svg>`,
+  alarmed: `<svg viewBox="0 0 64 64">${FACE_BASE.hairBack}${FACE_BASE.face}
+    <path d="M20 27 Q24 24.5 28 27" stroke="#2C3A5E" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+    <path d="M36 27 Q40 24.5 44 27" stroke="#2C3A5E" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+    <circle cx="24.5" cy="33" r="3.6" fill="#3A6EA5"/><circle cx="40.5" cy="33" r="3.6" fill="#3A6EA5"/>
+    <circle cx="24.5" cy="33" r="1.6" fill="#1A2438"/><circle cx="40.5" cy="33" r="1.6" fill="#1A2438"/>
+    <circle cx="23.4" cy="31.6" r="0.8" fill="#fff"/><circle cx="39.4" cy="31.6" r="0.8" fill="#fff"/>
+    ${FACE_BASE.nose}
+    <ellipse cx="32" cy="46" rx="4.5" ry="3.6" fill="#5A3A2E"/>
+    ${FACE_BASE.hairFront}</svg>`
+};
+
+const seasons = ['春季','夏季','秋季','冬季'];
+const storyLines = [
+  '南里桜は集落の仲間たちと共に、白亜紀の大地で新しい文明を築き始めた。',
+  '夏が訪れ、集落は成長している。周辺への探検も活発化し始めた。',
+  '秋を迎え、冬への準備が急務だ。資源の確保が重要になる。',
+  '厳しい冬が訪れた。集落全体で力を合わせてこの季節を乗り切る。',
+  '新しい年へ。桜は白亜紀の謎に一歩近づいた。',
+  '集落の技術が飛躍的に向上している。新しい可能性が見えてきた。',
+  '恐竜との遭遇は避けられない。集落の防衛が課題となってきた。',
+  '文明の創造は想像以上に困難だ。しかし諦めてはいられない。'
+];
+const randomEvents = [
+  { text: '豊作の兆し。食料が予想以上に集まった。', effect: { food: 15 } },
+  { text: '軽い病が流行したが、大事には至らなかった。', effect: { happiness: -8 } },
+  { text: '仲間が珍しい木の実を見つけ、皆が喜んだ。', effect: { happiness: 10 } },
+  { text: '嵐が集落を襲い、備蓄の一部が失われた。', effect: { wood: -10, food: -10 } },
+  { text: '旅人が知識を分けてくれた。', effect: { techPoints: 3 } }
+];
+
+function freshState() {
+  return {
+    turn: 0, season: 0,
+    population: 12, food: 45, wood: 28, stone: 12, techPoints: 5, happiness: 75,
+    buildings: { huts: 3, farm: 1, watchtower: 0 },
+    technology: { agriculture: 1, hunting: 1, construction: 1, mas: 0, met: 0, def: 0, med: 0, agr2: 0, hun2: 0, irrigation: 0, fortify: 0 },
+    dinosaurThreat: 0,
+    locations: [
+      { id: 0, name: '深い森', icon: ICONS.forest, explored: false, resource: 'wood', amount: 20 },
+      { id: 1, name: '川沿い', icon: ICONS.river, explored: false, resource: 'food', amount: 25 },
+      { id: 2, name: '石の崖', icon: ICONS.cliff, explored: false, resource: 'stone', amount: 30 },
+      { id: 3, name: '古い遺跡', icon: ICONS.ruins, explored: false, resource: 'techPoints', amount: 10 },
+      { id: 4, name: '恐竜の谷', icon: ICONS.dino, explored: false, resource: 'danger', danger: 30 },
+      { id: 5, name: '鉱脈', icon: ICONS.mine, explored: false, resource: 'stone', amount: 40 }
+    ],
+    technologies: [
+      { id: 'agr2', name: '高度な農業', cost: 11, prereq: 'agriculture' },
+      { id: 'hun2', name: '狩猟技術Ⅱ', cost: 9, prereq: 'hunting' },
+      { id: 'mas', name: '石造建築', cost: 14, prereq: 'construction' },
+      { id: 'met', name: '金属工学', cost: 15, prereq: 'mas' },
+      { id: 'med', name: '医療知識', cost: 13, prereq: null },
+      { id: 'def', name: '防衛技術', cost: 14, prereq: 'construction' },
+      { id: 'irrigation', name: '灌漑技術', cost: 16, prereq: 'agr2' },
+      { id: 'fortify', name: '要塞化', cost: 16, prereq: 'def' }
+    ],
+    story: 0, eventText: '', gameEnded: false
+  };
+}
+
+let gs = freshState();
+
+const actions = [
+  { name: '狩りに出かける', icon: 'hunt', cost: { food: -8 }, gain: { food: 26, wood: 5 }, effect: '食料獲得' },
+  { name: '採石に出かける', icon: 'quarry', cost: { food: -8 }, gain: { stone: 10 }, effect: '石材獲得' },
+  { name: '農地を拡張', icon: 'farm', cost: { food: -8, wood: -5 }, gain: { population: 1, food: 10 }, effect: '人口と食料が増える' },
+  { name: '小屋を建てる', icon: 'hut', cost: { food: -5, wood: -15 }, gain: { population: 2, happiness: 5 }, effect: '移住者増加' },
+  { name: '井戸を掘る', icon: 'well', cost: { food: -3, wood: -8, stone: -8 }, gain: { happiness: 15 }, effect: '衛生向上' },
+  { name: '医療施設', icon: 'medical', cost: { food: -10, wood: -20 }, gain: { happiness: 20 }, effect: '健康管理' },
+  { name: '見張り台を建設', icon: 'tower', cost: { food: -8, wood: -18, stone: -10 }, gain: { watchtower: 1, dinosaurThreat: -15 }, effect: '恒久的な防衛力+1' },
+  { name: '木材で交易する', icon: 'trade', cost: { wood: -30 }, gain: { food: 15, happiness: 5 }, effect: '余った木材を資源に変換' },
+  { name: '貯蔵庫を建てる', icon: 'storehouse', cost: { wood: -15, stone: -25 }, gain: { happiness: 10, techPoints: 3 }, effect: '余剰資源を有効活用' },
+  { name: '集落を休める', icon: 'rest', cost: {}, gain: { happiness: 10 }, effect: '疲労軽減' },
+  { name: '祭りを開催', icon: 'festival', cost: { food: -20 }, gain: { happiness: 25, population: 1 }, effect: '結束強化' }
+];
+
+function round(n) { return Math.round(n * 10) / 10; }
+
+function getExpression() {
+  if (gs.dinosaurThreat > 60) return 'alarmed';
+  if (gs.food < 10 || gs.happiness < 30) return 'exhausted';
+  if (gs.happiness < 55) return 'worried';
+  if (gs.happiness >= 75) return 'happy';
+  return 'neutral';
+}
+
+function renderVillageScene() {
+  const hutCount = Math.min(6, gs.buildings.huts);
+  const towerCount = Math.min(3, gs.buildings.watchtower);
+  const prosperity = Math.min(1, gs.population / 30);
+  const skyColor = gs.dinosaurThreat > 50 ? '#C9A87A' : (prosperity > 0.6 ? '#BFE3F5' : '#E8DCC0');
+  const groundColor = prosperity > 0.5 ? '#7FA85C' : '#A69A72';
+
+  let huts = '';
+  for (let i = 0; i < hutCount; i++) {
+    const x = 20 + i * 42;
+    huts += `<path d="M${x} 55 L${x+14} 40 L${x+28} 55 Z" fill="#8A6A4A"/><rect x="${x+6}" y="55" width="16" height="14" fill="#B99B72"/>`;
+  }
+  let towers = '';
+  for (let i = 0; i < towerCount; i++) {
+    const x = 300 + i * 26;
+    towers += `<rect x="${x}" y="34" width="10" height="35" fill="#7A6A56"/><path d="M${x-2} 34 L${x+5} 24 L${x+12} 34 Z" fill="#5A4A3A"/>`;
+  }
+  const stormOverlay = gs.dinosaurThreat > 50 ? `<rect x="0" y="0" width="400" height="90" fill="#5A4A3A" opacity="0.18"/>` : '';
+
+  document.getElementById('villageScene').innerHTML = `
+    <svg viewBox="0 0 400 90" xmlns="http://www.w3.org/2000/svg">
+      <rect x="0" y="0" width="400" height="90" fill="${skyColor}"/>
+      <rect x="0" y="60" width="400" height="30" fill="${groundColor}"/>
+      ${huts}
+      ${towers}
+      ${stormOverlay}
+    </svg>`;
+}
+
+function getVillageStatusText() {
+  const parts = [];
+
+  if (gs.population <= 5) parts.push('人口は危機的に少ない');
+  else if (gs.population < 15) parts.push('集落はまだ小さい');
+  else if (gs.population < 25) parts.push('集落は着実に育っている');
+  else parts.push('集落は大きく繁栄している');
+
+  if (gs.food < 10) parts.push('食料は底をつきかけている');
+  else if (gs.food < 25) parts.push('食料はやや心許ない');
+  else parts.push('食料は十分に蓄えられている');
+
+  if (gs.dinosaurThreat > 60) parts.push('恐竜の脅威が深刻化している');
+  else if (gs.dinosaurThreat > 30) parts.push('恐竜の気配が漂う');
+
+  if (gs.happiness < 30) parts.push('村人たちは疲弊している');
+  else if (gs.happiness >= 85) parts.push('村人たちは満ち足りている');
+
+  return parts.join('。') + '。';
+}
+
+function updatePortrait() {
+  document.getElementById('portrait').innerHTML = FACES[getExpression()];
+}
+
+function updateUI() {
+  const year = Math.floor(gs.turn / 4) + 1;
+  document.getElementById('mainSubtitle').textContent = `白亜紀 第${year}年 ${seasons[gs.season]}`;
+  document.getElementById('population').textContent = Math.max(0, gs.population);
+  document.getElementById('food').textContent = round(Math.max(0, gs.food));
+  document.getElementById('wood').textContent = round(Math.max(0, gs.wood));
+  document.getElementById('stone').textContent = round(Math.max(0, gs.stone));
+  document.getElementById('techPoints').textContent = round(gs.techPoints);
+  document.getElementById('happiness').textContent = Math.max(0, Math.min(100, Math.round(gs.happiness))) + '%';
+
+  document.getElementById('popBar').style.width = Math.min(100, gs.population * 2) + '%';
+  document.getElementById('foodBar').style.width = Math.min(100, gs.food) + '%';
+  document.getElementById('foodBar').className = 'metric-fill' + (gs.food < 15 ? ' warn' : '');
+  document.getElementById('woodBar').style.width = Math.min(100, gs.wood * 2) + '%';
+  document.getElementById('stoneBar').style.width = Math.min(100, gs.stone * 2) + '%';
+  document.getElementById('techBar').style.width = Math.min(100, gs.techPoints * 3) + '%';
+  document.getElementById('happyBar').style.width = Math.max(0, Math.min(100, gs.happiness)) + '%';
+  document.getElementById('happyBar').className = 'metric-fill' + (gs.happiness < 30 ? ' warn' : '');
+
+  if (gs.dinosaurThreat > 40) {
+    document.getElementById('dinosaurAlert').style.display = 'block';
+    document.getElementById('dinosaurAlert').innerHTML = `<div style="display:flex;align-items:center;gap:10px;"><span style="width:28px;height:28px;flex-shrink:0;">${ICONS.dino}</span><span><strong>恐竜の脅威</strong>危険度: ${Math.round(gs.dinosaurThreat)}%。見張り台の建設を検討しよう。</span></div>`;
+  } else {
+    document.getElementById('dinosaurAlert').style.display = 'none';
+  }
+
+  document.getElementById('storyText').textContent = storyLines[Math.min(gs.story, storyLines.length - 1)];
+  document.getElementById('eventLog').textContent = gs.eventText;
+
+  renderActions();
+  renderMap();
+  renderTech();
+  updatePortrait();
+  renderVillageScene();
+  document.getElementById('villageStatus').textContent = getVillageStatusText();
+  checkEnding();
+}
+
+function renderActions() {
+  const c = document.getElementById('actionsContainer');
+  c.innerHTML = '';
+  actions.forEach(a => {
+    const btn = document.createElement('button');
+    btn.className = 'action-btn';
+    const canAfford = Object.entries(a.cost).every(([r, v]) => gs[r] >= -v);
+    if (!canAfford) btn.classList.add('disabled');
+    btn.innerHTML = `${ICONS[a.icon]}<span class="action-text"><span class="action-name">${a.name}</span><span class="action-cost">${a.effect}</span></span>`;
+    btn.onclick = () => canAfford && performAction(a);
+    c.appendChild(btn);
+  });
+}
+
+function performAction(a) {
+  Object.entries(a.cost).forEach(([r, v]) => gs[r] += v);
+  Object.entries(a.gain).forEach(([r, v]) => {
+    if (r === 'watchtower') gs.buildings.watchtower += v;
+    else gs[r] += v;
+  });
+  gs.happiness = Math.max(0, Math.min(100, gs.happiness));
+  gs.population = Math.max(1, gs.population);
+  gs.food = Math.max(0, gs.food);
+  gs.dinosaurThreat = Math.max(0, gs.dinosaurThreat);
+  gs.story = Math.min(storyLines.length - 1, gs.story + 1);
+  nextTurn();
+}
+
+function renderMap() {
+  const c = document.getElementById('mapContainer');
+  c.innerHTML = '';
+  gs.locations.forEach(loc => {
+    const div = document.createElement('div');
+    div.className = 'location' + (loc.explored ? ' explored' : '');
+    div.innerHTML = `<div class="location-icon">${loc.icon}</div><div class="location-name">${loc.name}</div><div class="location-status">${loc.explored ? '探検済み' : '未探検'}</div>`;
+    div.onclick = () => exploreLocation(loc);
+    c.appendChild(div);
+  });
+}
+
+function exploreLocation(loc) {
+  if (loc.explored) return;
+  if (loc.resource === 'danger') {
+    showChoice(loc);
+    return;
+  }
+  loc.explored = true;
+  gs[loc.resource] += loc.amount;
+  gs.techPoints += 2;
+  gs.story = Math.min(storyLines.length - 1, gs.story + 1);
+  updateUI();
+}
+
+function showChoice(loc) {
+  document.getElementById('choiceBox').style.display = 'block';
+  document.getElementById('choiceBox').innerHTML = `
+    <div class="choice-box">
+      <p>${loc.name}で恐竜に遭遇した。どうする？</p>
+      <div class="choice-btns">
+        <button id="fightBtn">戦う（見張り台があれば有利）</button>
+        <button id="retreatBtn">撤退する</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('fightBtn').onclick = () => {
+    const winChance = 0.4 + gs.buildings.watchtower * 0.15;
+    if (Math.random() < winChance) {
+      gs.techPoints += 6;
+      gs.eventText = `${loc.name}での戦いに勝利し、貴重な資源を得た。`;
+    } else {
+      gs.population = Math.max(1, gs.population - 2);
+      gs.happiness -= 15;
+      gs.eventText = `${loc.name}での戦いに敗れ、仲間を失った。`;
+    }
+    loc.explored = true;
+    document.getElementById('choiceBox').style.display = 'none';
+    updateUI();
+  };
+  document.getElementById('retreatBtn').onclick = () => {
+    gs.eventText = `${loc.name}から静かに撤退した。`;
+    document.getElementById('choiceBox').style.display = 'none';
+    updateUI();
+  };
+}
+
+function renderTech() {
+  const c = document.getElementById('techContainer');
+  c.innerHTML = '';
+  gs.technologies.forEach(t => {
+    const div = document.createElement('div');
+    const already = gs.technology[t.id] > 0;
+    const affordable = gs.techPoints >= t.cost && (!t.prereq || gs.technology[t.prereq] > 0);
+    div.className = 'tech' + (already ? ' unlocked' : affordable ? '' : ' locked');
+    div.innerHTML = `<div class="tech-name">${t.name}</div><div class="tech-cost">必要技術点: ${t.cost}</div><div class="tech-level">${already ? '研究済み' : affordable ? '研究可能' : '未解禁'}</div>`;
+    div.onclick = () => !already && affordable && researchTech(t);
+    c.appendChild(div);
+  });
+}
+
+function researchTech(t) {
+  gs.techPoints -= t.cost;
+  gs.technology[t.id] = 1;
+  gs.happiness += 5;
+  if (t.id === 'def') gs.buildings.watchtower += 1;
+  updateUI();
+}
+
+function nextTurn() {
+  if (gs.gameEnded) return;
+  gs.turn++;
+  gs.season = gs.turn % 4;
+
+  const consumption = Math.ceil(gs.population * 2);
+  const farmYield = gs.buildings.farm * 6 * (1 + gs.technology.agriculture * 0.5 + gs.technology.agr2 + (gs.technology.irrigation ? 0.5 : 0));
+  const huntYield = gs.technology.hun2 ? 4 : 0;
+  gs.food += farmYield + huntYield - consumption;
+
+  if (gs.food < 0) {
+    gs.happiness -= 15;
+    gs.population = Math.max(1, Math.floor(gs.population * 0.85));
+    gs.food = 0;
+  } else {
+    gs.happiness = Math.min(100, gs.happiness + 1);
+  }
+
+  gs.wood += gs.buildings.huts * 2;
+  gs.stone += gs.buildings.watchtower * 0.5;
+  const fortifyBonus = gs.technology.fortify ? 3 : 0;
+  gs.dinosaurThreat = Math.max(0, gs.dinosaurThreat - gs.buildings.watchtower * (5 + fortifyBonus));
+  if (gs.season === 3) gs.dinosaurThreat = Math.min(100, gs.dinosaurThreat + 12);
+  else if (gs.turn % 8 === 0) gs.dinosaurThreat = Math.min(100, gs.dinosaurThreat + 6);
+  gs.techPoints += 1 + (gs.technology.med ? 1 : 0);
+
+  gs.eventText = '';
+  if (Math.random() < 0.35) {
+    const ev = randomEvents[Math.floor(Math.random() * randomEvents.length)];
+    Object.entries(ev.effect).forEach(([r, v]) => gs[r] += v);
+    gs.eventText = ev.text;
+  }
+
+  gs.food = Math.max(0, gs.food);
+  gs.happiness = Math.max(0, Math.min(100, gs.happiness));
+  gs.story = Math.min(storyLines.length - 1, gs.story + 1);
+
+  updateUI();
+}
+
+function checkEnding() {
+  if (gs.gameEnded) return;
+  const year = Math.floor(gs.turn / 4) + 1;
+  if (gs.population <= 0) {
+    endGame('集落が滅亡した。文明の夢は終わった。');
+  } else if (gs.population >= 25 && year >= 7) {
+    endGame('集落は大きく発展し、真の文明へと成長した。');
+  } else if (year >= 7 && gs.technology.met && gs.buildings.watchtower >= 2) {
+    endGame('技術と防衛により、白亜紀での文明確立に成功した。');
+  }
+}
+
+function endGame(message) {
+  gs.gameEnded = true;
+  const screen = document.getElementById('endingScreen');
+  screen.innerHTML = `<div class="ending-screen"><div class="ending-title">ゲーム終了</div><div class="ending-text">${message}</div><div style="font-size:13px;color:#666;margin-bottom:1.5rem;">年数: ${Math.floor(gs.turn/4)+1} | 人口: ${gs.population} | 幸福度: ${Math.round(gs.happiness)}%</div><button class="btn" id="restartBtn">新しいゲームを開始</button></div>`;
+  screen.style.display = 'block';
+  document.getElementById('game').style.display = 'none';
+  document.getElementById('restartBtn').onclick = () => { gs = freshState(); screen.style.display = 'none'; document.getElementById('game').style.display = 'block'; updateUI(); };
+}
+
+function saveGame() {
+  const name = `セーブ${new Date().toLocaleTimeString('ja-JP')}`;
+  const saves = JSON.parse(localStorage.getItem('hakuaSavesV12') || '{}');
+  saves[name] = { ...gs, savedAt: new Date().toLocaleString('ja-JP') };
+  localStorage.setItem('hakuaSavesV12', JSON.stringify(saves));
+  renderSaves();
+}
+
+function renderSaves() {
+  const c = document.getElementById('saveSlotsContainer');
+  const saves = JSON.parse(localStorage.getItem('hakuaSavesV12') || '{}');
+  c.innerHTML = Object.keys(saves).length === 0 ? '<p style="color:#999;font-size:13px;">セーブデータがありません。</p>' : '';
+  Object.entries(saves).forEach(([name, data]) => {
+    const div = document.createElement('div');
+    div.className = 'save-slot';
+    div.innerHTML = `<div><div class="save-name">${name}</div><div class="save-date">年:${Math.floor(data.turn/4)+1} 人口:${data.population} ${data.savedAt}</div></div><button id="load-${name}">読込</button>`;
+    c.appendChild(div);
+    div.querySelector('button').onclick = () => { gs = data; gs.gameEnded = false; document.getElementById('endingScreen').style.display = 'none'; document.getElementById('game').style.display = 'block'; updateUI(); };
+  });
+}
+
+document.getElementById('resetBtn').onclick = () => { gs = freshState(); document.getElementById('endingScreen').style.display = 'none'; document.getElementById('game').style.display = 'block'; updateUI(); };
+document.getElementById('saveBtn').onclick = saveGame;
+document.getElementById('exportBtn').onclick = () => { document.getElementById('importArea').value = JSON.stringify(gs); };
+document.getElementById('importBtn').onclick = () => {
+  try { gs = JSON.parse(document.getElementById('importArea').value); gs.gameEnded = false; updateUI(); }
+  catch (e) { alert('データの形式が正しくありません'); }
+};
+
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.onclick = () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById(tab.dataset.panel).classList.add('active');
+    if (tab.dataset.panel === 'save') renderSaves();
+  };
+});
+
+updateUI();
+</script>
+</body>
+</html>
