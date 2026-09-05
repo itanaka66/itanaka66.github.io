@@ -3,79 +3,133 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>白亜のノート - 修正版v12</title>
+<title>白亜のノート - 修正版v13</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; overflow: hidden; }
 body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; color: #333; background: #f5f5f5; }
-.game-container { padding: 1rem; max-width: 700px; margin: 0 auto; }
-.banner { border-radius: 10px; overflow: hidden; margin-bottom: 1rem; line-height: 0; }
-.banner svg { width: 100%; height: 90px; display: block; }
-.status-row { display: flex; gap: 12px; margin-bottom: 1rem; }
-.portrait-box { background: white; border: 1px solid #ddd; border-radius: 8px; padding: 8px; text-align: center; flex-shrink: 0; width: 88px; }
-.portrait-box svg { width: 64px; height: 64px; }
+
+.game-container {
+  height: 100vh;
+  height: 100dvh;
+  max-width: 1366px;
+  margin: 0 auto;
+  padding: 0.6rem 0.8rem;
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: auto auto auto auto 1fr;
+  grid-template-areas: "banner" "header" "overview" "tabs" "content";
+  gap: 0.5rem;
+  overflow: hidden;
+}
+.banner { grid-area: banner; border-radius: 10px; overflow: hidden; line-height: 0; flex-shrink: 0; }
+.banner svg { width: 100%; height: clamp(50px, 8vh, 90px); display: block; }
+
+.header { grid-area: header; padding-bottom: 0.4rem; border-bottom: 1px solid #ddd; flex-shrink: 0; }
+.title { font-size: clamp(14px, 2vh, 18px); font-weight: 500; margin-bottom: 0.15rem; }
+.subtitle { font-size: clamp(11px, 1.6vh, 13px); color: #666; }
+
+.overview { grid-area: overview; overflow-y: auto; min-height: 0; }
+.status-row { display: flex; gap: 10px; margin-bottom: 0.6rem; }
+.portrait-box { background: white; border: 1px solid #ddd; border-radius: 8px; padding: 6px; text-align: center; flex-shrink: 0; width: clamp(64px, 9vw, 88px); }
+.portrait-box svg { width: 100%; height: auto; max-height: 64px; }
 .portrait-label { font-size: 10px; color: #999; margin-top: 2px; }
-.village-box { background: white; border: 1px solid #ddd; border-radius: 8px; padding: 8px; flex: 1; overflow: hidden; }
-.village-box svg { width: 100%; height: 80px; display: block; }
-.village-status { font-size: 12px; color: #666; margin-top: 6px; padding-top: 6px; border-top: 1px solid #eee; }
-.header { margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid #ddd; }
+.village-box { background: white; border: 1px solid #ddd; border-radius: 8px; padding: 6px; flex: 1; overflow: hidden; min-width: 0; }
+.village-box svg { width: 100%; height: clamp(48px, 7vh, 80px); display: block; }
+.village-status { font-size: 11px; color: #666; margin-top: 4px; padding-top: 4px; border-top: 1px solid #eee; }
+
 .location-icon svg { width: 32px; height: 32px; }
-.title { font-size: 18px; font-weight: 500; margin-bottom: 0.25rem; }
-.subtitle { font-size: 13px; color: #666; }
-.tabs { display: flex; margin-bottom: 1.5rem; border-bottom: 1px solid #ddd; overflow-x: auto; }
-.tab { padding: 12px 14px; border: none; background: transparent; cursor: pointer; font-size: 13px; color: #999; border-bottom: 2px solid transparent; white-space: nowrap; }
+
+.tabs { grid-area: tabs; display: flex; border-bottom: 1px solid #ddd; overflow-x: auto; flex-shrink: 0; }
+.tab { padding: 8px 12px; border: none; background: transparent; cursor: pointer; font-size: 13px; color: #999; border-bottom: 2px solid transparent; white-space: nowrap; }
 .tab.active { color: #333; border-bottom-color: #378ADD; }
-.panel { display: none; }
+
+.tab-content { grid-area: content; min-height: 0; overflow: hidden; position: relative; }
+.panel { display: none; height: 100%; overflow-y: auto; padding-right: 2px; }
 .panel.active { display: block; }
-.metrics { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 1rem; }
-.metric { background: white; padding: 12px; border-radius: 8px; border: 1px solid #ddd; }
-.metric-label { font-size: 12px; color: #999; margin-bottom: 4px; }
-.metric-value { font-size: 18px; font-weight: 500; }
-.metric-bar { height: 4px; background: #ddd; border-radius: 2px; margin-top: 6px; overflow: hidden; }
+
+.metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 0.6rem; }
+.metric { background: white; padding: 8px 10px; border-radius: 8px; border: 1px solid #ddd; }
+.metric-label { font-size: 11px; color: #999; margin-bottom: 2px; }
+.metric-value { font-size: 16px; font-weight: 500; }
+.metric-bar { height: 4px; background: #ddd; border-radius: 2px; margin-top: 4px; overflow: hidden; }
 .metric-fill { height: 100%; background: #378ADD; border-radius: 2px; }
 .metric-fill.warn { background: #E24B4A; }
-.story-box { background: white; padding: 1rem; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 1rem; }
-.story-text { font-size: 14px; line-height: 1.6; }
-.event-log { font-size: 12px; color: #666; margin-top: 8px; padding-top: 8px; border-top: 1px solid #eee; min-height: 16px; }
-.dinosaur-alert { background: #FEE8E8; color: #A32D2D; padding: 12px; border-radius: 8px; margin-bottom: 1rem; font-size: 13px; border: 1px solid #F09595; }
-.dinosaur-alert strong { display: block; margin-bottom: 4px; }
-.actions { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 1rem; }
-.action-btn { padding: 12px; border: 1px solid #ddd; border-radius: 8px; background: white; cursor: pointer; font-size: 12px; display: flex; align-items: center; gap: 10px; text-align: left; }
-.action-btn svg { width: 26px; height: 26px; flex-shrink: 0; }
-.action-text { display: flex; flex-direction: column; }
+
+.story-box { background: white; padding: 0.7rem; border-radius: 8px; border: 1px solid #ddd; }
+.story-text { font-size: 13px; line-height: 1.5; }
+.event-log { font-size: 11px; color: #666; margin-top: 6px; padding-top: 6px; border-top: 1px solid #eee; min-height: 14px; }
+.dinosaur-alert { background: #FEE8E8; color: #A32D2D; padding: 10px; border-radius: 8px; margin-bottom: 0.6rem; font-size: 12px; border: 1px solid #F09595; }
+.dinosaur-alert strong { display: block; margin-bottom: 2px; }
+
+.actions { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-bottom: 0.6rem; }
+.action-btn { padding: 8px 10px; border: 1px solid #ddd; border-radius: 8px; background: white; cursor: pointer; font-size: 12px; display: flex; align-items: center; gap: 8px; text-align: left; }
+.action-btn svg { width: 22px; height: 22px; flex-shrink: 0; }
+.action-text { display: flex; flex-direction: column; min-width: 0; }
 .action-btn:hover { background: #f9f9f9; }
 .action-btn.disabled { opacity: 0.5; cursor: not-allowed; }
-.action-name { font-weight: 500; display: block; margin-bottom: 2px; }
-.action-cost { font-size: 11px; color: #999; }
-.map { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 1rem; }
-.location { background: white; padding: 12px; border-radius: 8px; border: 1px solid #ddd; cursor: pointer; text-align: center; }
+.action-name { font-weight: 500; display: block; margin-bottom: 1px; }
+.action-cost { font-size: 10px; color: #999; }
+
+.map { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.location { background: white; padding: 8px; border-radius: 8px; border: 1px solid #ddd; cursor: pointer; text-align: center; }
 .location:hover { background: #f9f9f9; }
-.location-name { font-weight: 500; font-size: 13px; margin-bottom: 4px; }
-.location-icon { font-size: 22px; margin: 6px 0; }
-.location-status { font-size: 11px; color: #999; }
+.location-name { font-weight: 500; font-size: 12px; margin-bottom: 2px; }
+.location-status { font-size: 10px; color: #999; }
 .location.explored { border-color: #378ADD; background: #E6F1FB; }
-.tech-tree { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 1rem; }
-.tech { background: white; padding: 12px; border-radius: 8px; border: 1px solid #ddd; cursor: pointer; }
+
+.tech-tree { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.tech { background: white; padding: 8px 10px; border-radius: 8px; border: 1px solid #ddd; cursor: pointer; }
 .tech.unlocked { border-color: #639922; background: #EAF3DE; }
 .tech.locked { opacity: 0.6; }
-.tech-name { font-weight: 500; font-size: 13px; margin-bottom: 4px; }
-.tech-cost { font-size: 11px; color: #999; }
-.tech-level { font-size: 12px; margin-top: 4px; }
-.save-slot { background: white; padding: 12px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
-.save-name { font-weight: 500; font-size: 13px; }
-.save-date { font-size: 11px; color: #999; margin-top: 2px; }
-.save-slot button { padding: 8px 12px; font-size: 12px; border: 1px solid #ddd; border-radius: 8px; background: white; cursor: pointer; }
-textarea { width: 100%; height: 80px; font-size: 11px; border: 1px solid #ddd; border-radius: 8px; padding: 8px; margin-bottom: 8px; }
+.tech-name { font-weight: 500; font-size: 12px; margin-bottom: 2px; }
+.tech-cost { font-size: 10px; color: #999; }
+.tech-level { font-size: 11px; margin-top: 2px; }
+
+.save-slot { background: white; padding: 10px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
+.save-name { font-weight: 500; font-size: 12px; }
+.save-date { font-size: 10px; color: #999; margin-top: 2px; }
+.save-slot button { padding: 6px 10px; font-size: 11px; border: 1px solid #ddd; border-radius: 8px; background: white; cursor: pointer; }
+textarea { width: 100%; height: 60px; font-size: 11px; border: 1px solid #ddd; border-radius: 8px; padding: 6px; margin-bottom: 6px; }
+
 .controls { display: flex; gap: 8px; flex-wrap: wrap; }
-.btn { padding: 10px 16px; border: 1px solid #ddd; border-radius: 8px; background: #378ADD; color: white; cursor: pointer; font-size: 13px; font-weight: 500; }
+.btn { padding: 8px 14px; border: 1px solid #ddd; border-radius: 8px; background: #378ADD; color: white; cursor: pointer; font-size: 12px; font-weight: 500; }
 .btn-secondary { background: white; color: #333; }
 .btn-success { background: #639922; color: white; }
-.ending-screen { background: white; padding: 1.5rem; border-radius: 12px; border: 1px solid #ddd; text-align: center; }
-.ending-title { font-size: 20px; font-weight: 500; margin-bottom: 1rem; }
-.ending-text { font-size: 14px; line-height: 1.6; margin-bottom: 1.5rem; color: #666; }
-.choice-box { background: #FEE8E8; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; }
-.choice-box p { font-size: 13px; margin-bottom: 10px; color: #A32D2D; }
+
+.ending-screen { background: white; padding: 1.2rem; border-radius: 12px; border: 1px solid #ddd; text-align: center; }
+.ending-title { font-size: 18px; font-weight: 500; margin-bottom: 0.8rem; }
+.ending-text { font-size: 13px; line-height: 1.5; margin-bottom: 1rem; color: #666; }
+
+.choice-box { background: #FEE8E8; padding: 0.8rem; border-radius: 8px; margin-bottom: 0.6rem; }
+.choice-box p { font-size: 12px; margin-bottom: 8px; color: #A32D2D; }
 .choice-btns { display: flex; gap: 8px; }
-.choice-btns button { flex: 1; padding: 10px; font-size: 12px; border: 1px solid #ddd; border-radius: 8px; background: white; cursor: pointer; }
+.choice-btns button { flex: 1; padding: 8px; font-size: 11px; border: 1px solid #ddd; border-radius: 8px; background: white; cursor: pointer; }
+
+/* PC想定 1366x768 相当: 横長画面は2カラムレイアウト */
+@media (min-width: 900px) and (min-aspect-ratio: 1/1) {
+  .game-container {
+    grid-template-columns: 340px 1fr;
+    grid-template-rows: auto auto auto 1fr;
+    grid-template-areas:
+      "banner banner"
+      "overview header"
+      "overview tabs"
+      "overview content";
+  }
+  .status-row { flex-direction: column; }
+  .portrait-box { width: 100%; }
+  .metrics { grid-template-columns: repeat(2, 1fr); }
+  .actions { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* スマホ縦画面 1080x1920 相当: 1カラムを縦いっぱいに使う */
+@media (max-width: 899px), (max-aspect-ratio: 1/1) {
+  .banner svg { height: clamp(40px, 6vh, 70px); }
+  .metrics { grid-template-columns: repeat(2, 1fr); }
+  .actions { grid-template-columns: repeat(2, 1fr); }
+  .map, .tech-tree { grid-template-columns: repeat(2, 1fr); }
+}
 </style>
 </head>
 <body>
@@ -116,18 +170,11 @@ textarea { width: 100%; height: 80px; font-size: 11px; border: 1px solid #ddd; b
     </svg>
   </div>
   <div class="header">
-    <div class="title">白亜のノート - 修正版v12</div>
+    <div class="title">白亜のノート - 修正版v13</div>
     <div class="subtitle" id="mainSubtitle">白亜紀 第1年 春季</div>
   </div>
 
-  <div class="tabs">
-    <button class="tab active" data-panel="game">ゲーム</button>
-    <button class="tab" data-panel="map">探検</button>
-    <button class="tab" data-panel="tech">研究</button>
-    <button class="tab" data-panel="save">セーブ</button>
-  </div>
-
-  <div id="game" class="panel active">
+  <div class="overview">
     <div class="status-row">
       <div class="portrait-box">
         <div id="portrait"></div>
@@ -146,15 +193,23 @@ textarea { width: 100%; height: 80px; font-size: 11px; border: 1px solid #ddd; b
       <div class="metric"><div class="metric-label">技術点</div><div class="metric-value" id="techPoints">5</div><div class="metric-bar"><div class="metric-fill" id="techBar"></div></div></div>
       <div class="metric"><div class="metric-label">幸福度</div><div class="metric-value" id="happiness">75%</div><div class="metric-bar"><div class="metric-fill" id="happyBar"></div></div></div>
     </div>
-
     <div id="dinosaurAlert" class="dinosaur-alert" style="display:none;"></div>
     <div id="choiceBox" style="display:none;"></div>
-
     <div class="story-box">
       <div class="story-text" id="storyText"></div>
       <div class="event-log" id="eventLog"></div>
     </div>
+  </div>
 
+  <div class="tabs">
+    <button class="tab active" data-panel="game">ゲーム</button>
+    <button class="tab" data-panel="map">探検</button>
+    <button class="tab" data-panel="tech">研究</button>
+    <button class="tab" data-panel="save">セーブ</button>
+  </div>
+
+  <div class="tab-content">
+  <div id="game" class="panel active">
     <div class="actions" id="actionsContainer"></div>
     <div class="controls">
       <button class="btn btn-secondary" id="resetBtn">リセット</button>
@@ -182,6 +237,7 @@ textarea { width: 100%; height: 80px; font-size: 11px; border: 1px solid #ddd; b
   </div>
 
   <div id="endingScreen" style="display:none;"></div>
+  </div>
 </div>
 
 <script>
@@ -607,15 +663,15 @@ function endGame(message) {
 
 function saveGame() {
   const name = `セーブ${new Date().toLocaleTimeString('ja-JP')}`;
-  const saves = JSON.parse(localStorage.getItem('hakuaSavesV12') || '{}');
+  const saves = JSON.parse(localStorage.getItem('hakuaSavesV13') || '{}');
   saves[name] = { ...gs, savedAt: new Date().toLocaleString('ja-JP') };
-  localStorage.setItem('hakuaSavesV12', JSON.stringify(saves));
+  localStorage.setItem('hakuaSavesV13', JSON.stringify(saves));
   renderSaves();
 }
 
 function renderSaves() {
   const c = document.getElementById('saveSlotsContainer');
-  const saves = JSON.parse(localStorage.getItem('hakuaSavesV12') || '{}');
+  const saves = JSON.parse(localStorage.getItem('hakuaSavesV13') || '{}');
   c.innerHTML = Object.keys(saves).length === 0 ? '<p style="color:#999;font-size:13px;">セーブデータがありません。</p>' : '';
   Object.entries(saves).forEach(([name, data]) => {
     const div = document.createElement('div');
