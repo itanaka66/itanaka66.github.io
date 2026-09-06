@@ -661,17 +661,35 @@ function endGame(message) {
   document.getElementById('restartBtn').onclick = () => { gs = freshState(); screen.style.display = 'none'; document.getElementById('game').style.display = 'block'; updateUI(); };
 }
 
+// localStorageがブロックされる環境(file://で開いた場合など)向けのフォールバック
+const memoryStore = {};
+function safeGetStore() {
+  try {
+    return JSON.parse(localStorage.getItem('hakuaSavesV13') || '{}');
+  } catch (e) {
+    return memoryStore.hakuaSavesV13 ? JSON.parse(memoryStore.hakuaSavesV13) : {};
+  }
+}
+function safeSetStore(data) {
+  const json = JSON.stringify(data);
+  try {
+    localStorage.setItem('hakuaSavesV13', json);
+  } catch (e) {
+    memoryStore.hakuaSavesV13 = json;
+  }
+}
+
 function saveGame() {
   const name = `セーブ${new Date().toLocaleTimeString('ja-JP')}`;
-  const saves = JSON.parse(localStorage.getItem('hakuaSavesV13') || '{}');
+  const saves = safeGetStore();
   saves[name] = { ...gs, savedAt: new Date().toLocaleString('ja-JP') };
-  localStorage.setItem('hakuaSavesV13', JSON.stringify(saves));
+  safeSetStore(saves);
   renderSaves();
 }
 
 function renderSaves() {
   const c = document.getElementById('saveSlotsContainer');
-  const saves = JSON.parse(localStorage.getItem('hakuaSavesV13') || '{}');
+  const saves = safeGetStore();
   c.innerHTML = Object.keys(saves).length === 0 ? '<p style="color:#999;font-size:13px;">セーブデータがありません。</p>' : '';
   Object.entries(saves).forEach(([name, data]) => {
     const div = document.createElement('div');
